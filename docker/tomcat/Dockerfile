@@ -28,11 +28,10 @@ RUN unzip eIDAS-node-${EIDAS_NODE_VERSION}.zip EIDAS-Binaries-Tomcat-${EIDAS_NOD
     unzip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip && \
     # extract sample server config
     unzip TOMCAT/config.zip -d config && \
-    rm eIDAS-node-${EIDAS_NODE_VERSION}.zip
+    rm -f eIDAS-node-${EIDAS_NODE_VERSION}.zip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip
 
 # Stage runner
-FROM tomcat:${TOMCAT_VERSION} as runner
-
+FROM tomcat:${TOMCAT_VERSION} as runner-base
 USER root
 # non root user
 ARG TOMCAT_USER
@@ -42,9 +41,6 @@ RUN groupadd -r ${TOMCAT_USER} -g 1000 && \
     useradd -u 1000 -r -g ${TOMCAT_USER} -M -d /usr/local/tomcat -s /sbin/nologin -c "${TOMCAT_USER} user" ${TOMCAT_USER} && \
     chown -R ${TOMCAT_USER}:${TOMCAT_USER} /usr/local/tomcat
 
-# Copy eIDAS WAR files to Tomcat Image
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
 # Copy bouncycastle lib
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/lib/*.jar /opt/java/openjdk/lib/
 # Copy customized java security properties file to /etc/java/security
@@ -55,6 +51,11 @@ COPY files/tomcat/conf/server.xml /usr/local/tomcat/conf/
 # Copy ccustomized logging.properties to send logs to console
 COPY files/tomcat/conf/console_logging.properties /usr/local/tomcat/conf/
 
+FROM runner-base as eidas-node
+# Copy eIDAS WAR files to Tomcat Image
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
+
 RUN mkdir -p /config/eidas/specificProxyService && \
     mkdir -p /config/keystore && \
     mkdir -p /work && \
@@ -63,29 +64,18 @@ RUN mkdir -p /config/eidas/specificProxyService && \
     rm -rf /usr/local/tomcat/webapps/EidasNodeConnector.war && \
     unzip /usr/local/tomcat/webapps/EidasNodeProxy.war -d /usr/local/tomcat/webapps/EidasNodeProxy && \
     rm -rf /usr/local/tomcat/webapps/EidasNodeProxy.war && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /work && \
-    # Provide Bouncycastle Module and overwrite security providers
-    printf '\nJAVA_OPTS="$JAVA_OPTS -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"\n' \
-      >> /usr/local/tomcat/bin/setenv.sh && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /usr/local/tomcat
+    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config /work /usr/local/tomcat
 
 USER ${TOMCAT_USER}
 
 ENV EIDAS_CONFIG_REPOSITORY=/config/eidas
-ENV SPECIFIC_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/specificConnector
-ENV SPECIFIC_PROXY_SERVICE_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/specificProxyService
-ENV SP_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/sp
-ENV IDP_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/idp
-
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
-ENV JAVA_OPTS_CUSTOM="-Xmx512m"
+ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
 
-
-# Stage mock
-FROM runner as mock
+FROM runner-base as eidas-mock-services
 ARG TOMCAT_USER
+
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/IdP.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SP.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificConnector.war /usr/local/tomcat/webapps/
@@ -94,12 +84,26 @@ COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificP
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/ /tmp/config/
 
 # Copy server config
-RUN cp -r /tmp/config/tomcat/* /config/eidas/ && \
+RUN mkdir -p /config/eidas/specificProxyService && \
+    mkdir -p /config/keystore && \
+    mkdir -p /work && \
+    cp -r /tmp/config/tomcat/* /config/eidas/ && \
     cp -r /tmp/config/keystore/* /config/keystore/ && \
     rm -rf /tmp/config && \
     # unzip war because of secure readonly FS
     ( for war in IdP SP SpecificConnector SpecificProxyService ; do unzip /usr/local/tomcat/webapps/$war.war -d /usr/local/tomcat/webapps/$war ; rm -rf /usr/local/tomcat/webapps/$war.war ; done ) && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config /usr/local/tomcat
+    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config /usr/local/tomcat /work
+
+USER ${TOMCAT_USER}
+
+ENV EIDAS_CONFIG_REPOSITORY=/config/eidas
+ENV CATALINA_OPTS=""
+ENV JAVA_OPTS=""
+ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
+ENV SPECIFIC_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/specificConnector
+ENV SPECIFIC_PROXY_SERVICE_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/specificProxyService
+ENV SP_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/sp
+ENV IDP_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/idp
 
 # Stage last (default)
 FROM runner as last
