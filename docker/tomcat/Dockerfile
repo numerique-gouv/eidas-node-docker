@@ -52,6 +52,7 @@ COPY files/tomcat/conf/server.xml /usr/local/tomcat/conf/
 COPY files/tomcat/conf/console_logging.properties /usr/local/tomcat/conf/
 
 FROM runner-base as eidas-node
+ARG TOMCAT_USER
 # Copy eIDAS WAR files to Tomcat Image
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
