@@ -10,7 +10,7 @@ RUN apk update && \
 
 WORKDIR /data
 
-ARG EIDAS_NODE_VERSION=2.6.0
+ARG EIDAS_NODE_VERSION=2.7.0
 ARG EIDAS_NODE_URL=https://ec.europa.eu/digital-building-blocks/artifact/repository/eid/eu/eIDAS-node/${EIDAS_NODE_VERSION}/eIDAS-node-${EIDAS_NODE_VERSION}.zip
 
 # Download eIDAS-Node Software
@@ -27,8 +27,8 @@ RUN mkdir -p lib && \
 RUN unzip eIDAS-node-${EIDAS_NODE_VERSION}.zip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip && \
     unzip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip && \
     # extract sample server config
-    unzip TOMCAT/config.zip -d config
-
+    unzip TOMCAT/config.zip -d config && \
+    rm eIDAS-node-${EIDAS_NODE_VERSION}.zip
 
 # Stage runner
 FROM tomcat:${TOMCAT_VERSION} as runner
@@ -42,8 +42,9 @@ RUN groupadd -r ${TOMCAT_USER} -g 1000 && \
     useradd -u 1000 -r -g ${TOMCAT_USER} -M -d /usr/local/tomcat -s /sbin/nologin -c "${TOMCAT_USER} user" ${TOMCAT_USER} && \
     chown -R ${TOMCAT_USER}:${TOMCAT_USER} /usr/local/tomcat
 
-# Copy default WAR to Tomcat Image
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNode.war /usr/local/tomcat/webapps/
+# Copy eIDAS WAR files to Tomcat Image
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
 # Copy bouncycastle lib
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/lib/*.jar /opt/java/openjdk/lib/
 # Copy customized java security properties file to /etc/java/security
@@ -58,7 +59,10 @@ RUN mkdir -p /config/eidas/specificProxyService && \
     mkdir -p /config/keystore && \
     mkdir -p /work && \
     # unzip war because of secure readonly FS
-    unzip /usr/local/tomcat/webapps/EidasNode.war -d /usr/local/tomcat/webapps/EidasNode ; rm -rf /usr/local/tomcat/webapps/EidasNode.war ; \
+    unzip /usr/local/tomcat/webapps/EidasNodeConnector.war -d /usr/local/tomcat/webapps/EidasNodeConnector && \
+    rm -rf /usr/local/tomcat/webapps/EidasNodeConnector.war && \
+    unzip /usr/local/tomcat/webapps/EidasNodeProxy.war -d /usr/local/tomcat/webapps/EidasNodeProxy && \
+    rm -rf /usr/local/tomcat/webapps/EidasNodeProxy.war && \
     chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config && \
     chown -R ${TOMCAT_USER}:${TOMCAT_USER} /work && \
     # Provide Bouncycastle Module and overwrite security providers
