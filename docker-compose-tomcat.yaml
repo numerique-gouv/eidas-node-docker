@@ -1,13 +1,13 @@
 version: '3.5'
 
 services:
-  eidas-node-mock:
+  eidas-node:
     build:
       context: docker/tomcat
-      target: mock
-    image: eidas-node-mock:tomcat-latest
+      target: eidas-node
+    image: eidas-node:tomcat-latest
     platform: linux/amd64
-    container_name: eidas-node-mock
+    container_name: eidas-node
     security_opt:
       - no-new-privileges:true
     cap_drop:
