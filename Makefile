@@ -30,7 +30,7 @@ build-tomcat: build-eidas-node-tomcat build-eidas-node-mock-tomcat
 build-eidas-node-tomcat:
 	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node:tomcat-latest --target eidas-node docker/tomcat
 # full eidas-node with mock
-build-eidas-node-mock-tomcat:
+build-eidas-mock-tomcat:
 	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock:tomcat-latest --target eidas-mock docker/tomcat
 
 run-tomcat-mock:
