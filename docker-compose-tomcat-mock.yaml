@@ -1,0 +1,16 @@
+version: '3.5'
+
+services:
+  eidas-node:
+    build:
+      context: docker/tomcat
+      target: eidas-mock
+    image: eidas-mock:tomcat-latest
+    platform: linux/amd64
+    container_name: eidas-mock
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - all
+    ports:
+      - "8080:8080"
