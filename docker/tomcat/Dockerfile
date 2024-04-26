@@ -23,18 +23,17 @@ ARG BOUNCYCASTLE_URL=https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk1
 RUN mkdir -p lib && \
     ( cd lib && curl -LO ${BOUNCYCASTLE_URL} )
 
-# Unzip eIDAS-Node Software
+# Unzip eIDAS-Node Software and only keep necessary files
 RUN unzip eIDAS-node-${EIDAS_NODE_VERSION}.zip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip && \
     unzip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip && \
     # extract sample server config
     unzip TOMCAT/config.zip -d config && \
     rm -f eIDAS-node-${EIDAS_NODE_VERSION}.zip EIDAS-Binaries-Tomcat-${EIDAS_NODE_VERSION}.zip
 
-# Stage runner
+# Stage runner-base
 FROM tomcat:${TOMCAT_VERSION} as runner-base
-USER root
-# non root user
 ARG TOMCAT_USER
+USER root
 RUN apt-get -qy update  ; apt-get install -qy unzip
 
 RUN groupadd -r ${TOMCAT_USER} -g 1000 && \
@@ -56,16 +55,15 @@ ARG TOMCAT_USER
 # Copy eIDAS WAR files to Tomcat Image
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/connector/ /config/eidas/connector/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/proxy/ /config/eidas/proxy/
 
-RUN mkdir -p /config/eidas/specificProxyService && \
-    mkdir -p /config/keystore && \
-    mkdir -p /work && \
-    # unzip war because of secure readonly FS
+RUN mkdir -p /work && \
     unzip /usr/local/tomcat/webapps/EidasNodeConnector.war -d /usr/local/tomcat/webapps/EidasNodeConnector && \
     rm -rf /usr/local/tomcat/webapps/EidasNodeConnector.war && \
     unzip /usr/local/tomcat/webapps/EidasNodeProxy.war -d /usr/local/tomcat/webapps/EidasNodeProxy && \
     rm -rf /usr/local/tomcat/webapps/EidasNodeProxy.war && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config /work /usr/local/tomcat
+    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /work /usr/local/tomcat
 
 USER ${TOMCAT_USER}
 
@@ -74,6 +72,7 @@ ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
 
+# Stage eidas-mock-services
 FROM runner-base as eidas-mock-services
 ARG TOMCAT_USER
 
