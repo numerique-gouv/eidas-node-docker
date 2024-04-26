@@ -33,12 +33,17 @@ build-eidas-node-tomcat:
 build-eidas-node-mock-tomcat:
 	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock:tomcat-latest --target mock docker/tomcat
 
-run-tomcat: run-eidas-node-mock-tomcat
-down-tomcat: down-eidas-node-mock-tomcat
+run-tomcat: run-eidas-node-tomcat
+down-tomcat: down-eidas-node-tomcat
 run-eidas-node-mock-tomcat:
 	docker-compose -f docker-compose-tomcat.yaml up ${DOCKER_BUILD_NAME}-mock
 down-eidas-node-mock-tomcat:
 	docker-compose -f docker-compose-tomcat.yaml down ${DOCKER_BUILD_NAME}-mock
+run-eidas-node-tomcat:
+	docker-compose -f docker-compose-tomcat.yaml up ${DOCKER_BUILD_NAME}
+down-eidas-node-tomcat:
+	docker-compose -f docker-compose-tomcat.yaml down ${DOCKER_BUILD_NAME}
+
 #
 # dummy test
 #
