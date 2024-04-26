@@ -1,7 +1,7 @@
 version: '3.5'
 
 services:
-  eidas-node:
+  eidas-mock:
     build:
       context: docker/tomcat
       target: eidas-mock
