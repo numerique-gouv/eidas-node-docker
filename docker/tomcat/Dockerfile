@@ -50,7 +50,7 @@ COPY files/tomcat/conf/server.xml /usr/local/tomcat/conf/
 # Copy ccustomized logging.properties to send logs to console
 COPY files/tomcat/conf/console_logging.properties /usr/local/tomcat/conf/
 
-FROM runner-base as eidas-node
+FROM runner-base as eidas-base
 ARG TOMCAT_USER
 # Copy eIDAS WAR files to Tomcat Image
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
@@ -67,44 +67,33 @@ RUN mkdir -p /work && \
 
 USER ${TOMCAT_USER}
 
-ENV EIDAS_CONNECTOR_CONFIG_REPOSITORY=/config/eidas/connector
-ENV EIDAS_PROXY_CONFIG_REPOSITORY=/config/eidas/proxy
+ENV EIDAS_CONFIG_BASE=/config/eidas
+ENV EIDAS_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/connector
+ENV EIDAS_PROXY_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/proxy
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
 
-# Stage eidas-mock-services
-FROM runner-base as eidas-mock
+FROM eidas-base as eidas-node
+# Todo : overwrite default configuration file
+
+# Stage eidas-mock
+FROM eidas-base as eidas-mock
 ARG TOMCAT_USER
 
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/IdP.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SP.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificConnector.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificProxyService.war /usr/local/tomcat/webapps/
-# Copy server config
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/ /tmp/config/
 
-# Copy server config
-RUN mkdir -p /config/eidas/specificProxyService && \
-    mkdir -p /config/keystore && \
-    mkdir -p /work && \
-    cp -r /tmp/config/tomcat/* /config/eidas/ && \
-    rm -rf /tmp/config && \
-    ( for war in IdP SP SpecificConnector SpecificProxyService ; do unzip /usr/local/tomcat/webapps/$war.war -d /usr/local/tomcat/webapps/$war ; rm -rf /usr/local/tomcat/webapps/$war.war ; done ) && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config /usr/local/tomcat /work
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/idp/ /config/eidas/idp/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/sp/ /config/eidas/sp/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/specificConnector/ /config/eidas/specificConnector/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/specificProxyService/ /config/eidas/specificProxyService/
 
-USER ${TOMCAT_USER}
+RUN ( for war in IdP SP SpecificConnector SpecificProxyService ; do unzip /usr/local/tomcat/webapps/$war.war -d /usr/local/tomcat/webapps/$war ; rm -f /usr/local/tomcat/webapps/$war.war ; done )
 
-ENV EIDAS_CONFIG_REPOSITORY=/config/eidas
-ENV CATALINA_OPTS=""
-ENV JAVA_OPTS=""
-ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
-ENV SPECIFIC_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/specificConnector
-ENV SPECIFIC_PROXY_SERVICE_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/specificProxyService
-ENV SP_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/sp
-ENV IDP_CONFIG_REPOSITORY=$EIDAS_CONFIG_REPOSITORY/idp
-
-# Stage last (default)
-FROM runner as last
+ENV SPECIFIC_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/specificConnector
+ENV SPECIFIC_PROXY_SERVICE_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/specificProxyService
+ENV SP_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/sp
+ENV IDP_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/idp
