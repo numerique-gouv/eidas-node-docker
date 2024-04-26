@@ -10,6 +10,6 @@ fi
 ls -d /etc/eidas/instances/$EIDAS_INSTANCE
 
 docker run \
- -p $EIDAS_PORT:$EIDAS_PORT
- --mount type=bind,source=/etc/eidas/instances/$EIDAS_INSTANCE,target=/config/eidas,readonly
+ -p $EIDAS_PORT:$EIDAS_PORT \
+ --mount type=bind,source=/etc/eidas/instances/$EIDAS_INSTANCE,target=/config/eidas,readonly \
  eidas-mock:tomcat-latest
