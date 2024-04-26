@@ -67,15 +67,18 @@ RUN mkdir -p /work && \
 
 USER ${TOMCAT_USER}
 
-ENV EIDAS_CONFIG_REPOSITORY=/config/eidas
+ENV EIDAS_CONNECTOR_CONFIG_REPOSITORY=/config/eidas/connector
+ENV EIDAS_PROXY_CONFIG_REPOSITORY=/config/eidas/proxy
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
 
 # Stage eidas-mock-services
-FROM runner-base as eidas-mock-services
+FROM runner-base as eidas-mock
 ARG TOMCAT_USER
 
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeProxy.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/IdP.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SP.war /usr/local/tomcat/webapps/
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificConnector.war /usr/local/tomcat/webapps/
@@ -88,9 +91,7 @@ RUN mkdir -p /config/eidas/specificProxyService && \
     mkdir -p /config/keystore && \
     mkdir -p /work && \
     cp -r /tmp/config/tomcat/* /config/eidas/ && \
-    cp -r /tmp/config/keystore/* /config/keystore/ && \
     rm -rf /tmp/config && \
-    # unzip war because of secure readonly FS
     ( for war in IdP SP SpecificConnector SpecificProxyService ; do unzip /usr/local/tomcat/webapps/$war.war -d /usr/local/tomcat/webapps/$war ; rm -rf /usr/local/tomcat/webapps/$war.war ; done ) && \
     chown -R ${TOMCAT_USER}:${TOMCAT_USER} /config /usr/local/tomcat /work
 
