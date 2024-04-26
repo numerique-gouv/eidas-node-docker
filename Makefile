@@ -28,7 +28,7 @@ down-eidas-node-mock-wildfly:
 build-tomcat: build-eidas-node-tomcat build-eidas-node-mock-tomcat
 # eidas-node only
 build-eidas-node-tomcat:
-	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}:tomcat-latest docker/tomcat
+	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}:tomcat-latest --target eidas-node docker/tomcat
 # full eidas-node with mock
 build-eidas-node-mock-tomcat:
 	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock:tomcat-latest --target mock docker/tomcat
