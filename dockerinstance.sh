@@ -7,9 +7,14 @@ if [ -z "$EIDAS_INSTANCE" -o -z "$EIDAS_PORT" ]; then
   exit 1
 fi
 
+if [ "$EIDAS_TYPE" != "mock" -a "$EIDAS_TYPE" != "node" ]; then
+  echo "EIDAS_TYPE must be 'node' or 'mock'"
+  exit 1
+fi
+
 ls -d /etc/eidas/instances/$EIDAS_INSTANCE
 
 docker run \
  -p $EIDAS_PORT:$EIDAS_PORT \
  --mount type=bind,source=/etc/eidas/instances/$EIDAS_INSTANCE,target=/config/eidas,readonly \
- eidas-mock:tomcat-latest
+ eidas-$EIDAS_TYPE:tomcat-latest
