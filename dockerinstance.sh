@@ -15,6 +15,6 @@ fi
 ls -d /etc/eidas/instances/$EIDAS_INSTANCE
 
 docker run \
- -p $EIDAS_PORT:$EIDAS_PORT \
+ -p '[::1]':$EIDAS_PORT:8080 \
  --mount type=bind,source=/etc/eidas/instances/$EIDAS_INSTANCE,target=/config/eidas,readonly \
  eidas-$EIDAS_TYPE:tomcat-latest
