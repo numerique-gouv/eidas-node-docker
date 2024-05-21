@@ -4,6 +4,7 @@
 DOCKER_BUILD_ARGS= # --no-cache
 DOCKER_BUILD_NAME=eidas
 DOCKER_DEFAULT_PLATFORM=linux/amd64
+EIDAS_NODE_VERSION=2.7
 export
 #
 # eidas-node with wildfy
@@ -28,10 +29,10 @@ down-eidas-node-mock-wildfly:
 build-tomcat: build-eidas-node-tomcat build-eidas-node-mock-tomcat
 # eidas-node only
 build-eidas-node-tomcat:
-	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node:tomcat-latest --target eidas-node docker/tomcat
+	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-${EIDAS_NODE_VERSION} docker/tomcat
 # full eidas-node with mock
 build-eidas-mock-tomcat:
-	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock:tomcat-latest --target eidas-mock docker/tomcat
+	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-mock-${EIDAS_NODE_VERSION} docker/tomcat
 
 run-tomcat-mock:
 	docker-compose -f docker-compose-tomcat-mock.yaml up ${DOCKER_BUILD_NAME}-mock
