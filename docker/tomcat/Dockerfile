@@ -50,7 +50,7 @@ COPY files/tomcat/conf/server.xml /usr/local/tomcat/conf/
 # Copy ccustomized logging.properties to send logs to console
 COPY files/tomcat/conf/console_logging.properties /usr/local/tomcat/conf/
 
-FROM runner-base as eidas-base
+FROM runner-base as eidas-base-split
 ARG TOMCAT_USER
 # Copy eIDAS WAR files to Tomcat Image
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNodeConnector.war /usr/local/tomcat/webapps/
@@ -70,6 +70,23 @@ USER ${TOMCAT_USER}
 ENV EIDAS_CONFIG_BASE=/config/eidas
 ENV EIDAS_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/connector
 ENV EIDAS_PROXY_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/proxy
+ENV CATALINA_OPTS=""
+ENV JAVA_OPTS=""
+ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
+
+FROM runner-base as eidas-base-monolithic
+ARG TOMCAT_USER
+
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNode.war /usr/local/tomcat/webapps/
+
+RUN mkdir -p /work && \
+  unzip /usr/local/tomcat/webapps/EidasNode.war -d /usr/local/tomcat/webapps/EidasNode && \
+  rm -f /usr/local/tomcat/webapps/EidasNode.war && \
+  chown -R ${TOMCAT_USER}:${TOMCAT_USER} /work /usr/local/tomcat
+
+USER ${TOMCAT_USER}
+
+ENV EIDAS_CONFIG_REPOSITORY=/config/eidas
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
