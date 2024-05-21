@@ -74,11 +74,11 @@ ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
 
-FROM eidas-base as eidas-node-${EIDAS_NODE_VERSION}
+FROM eidas-base as eidas-node
 # Todo : overwrite default configuration file
 
 # Stage eidas-mock
-FROM eidas-base as eidas-mock-${EIDAS_NODE_VERSION}
+FROM eidas-base as eidas-mock
 ARG TOMCAT_USER
 
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/IdP.war /usr/local/tomcat/webapps/
