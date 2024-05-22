@@ -31,7 +31,7 @@ down-eidas-node-mock-wildfly:
 build-tomcat: build-eidas-node-tomcat build-eidas-node-mock-tomcat
 # eidas-node only
 build-eidas-node-tomcat:
-	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-$([ "${EIDAS_NODE_VERSION}" \>= 2.7 ] && echo split || echo monolithic) docker/tomcat
+	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-$([ "${EIDAS_NODE_VERSION}" >= 2.7 ] && echo split || echo monolithic) docker/tomcat
 # full eidas-node with mock
 build-eidas-mock-tomcat:
 	docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-mock-$([ "${EIDAS_NODE_VERSION}" \>= 2.7 ] && echo split || echo monolithic) docker/tomcat
