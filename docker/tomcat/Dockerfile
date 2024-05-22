@@ -79,6 +79,10 @@ ARG TOMCAT_USER
 
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNode.war /usr/local/tomcat/webapps/
 
+# Copy server config
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/* /config/eidas/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/keystore/* /config/keystore/
+
 RUN mkdir -p /work && \
   unzip /usr/local/tomcat/webapps/EidasNode.war -d /usr/local/tomcat/webapps/EidasNode && \
   rm -f /usr/local/tomcat/webapps/EidasNode.war && \
@@ -91,11 +95,31 @@ ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
 
-FROM eidas-base as eidas-node
-# Todo : overwrite default configuration file
+FROM eidas-base-split as eidas-node-split
 
-# Stage eidas-mock
-FROM eidas-base as eidas-mock
+FROM eidas-base-monolithic as eidas-node-monolithic
+
+FROM eidas-base-split as eidas-mock-split
+ARG TOMCAT_USER
+
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/IdP.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SP.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificConnector.war /usr/local/tomcat/webapps/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/SpecificProxyService.war /usr/local/tomcat/webapps/
+
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/idp/ /config/eidas/idp/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/sp/ /config/eidas/sp/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/specificConnector/ /config/eidas/specificConnector/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/specificProxyService/ /config/eidas/specificProxyService/
+
+RUN ( for war in IdP SP SpecificConnector SpecificProxyService ; do unzip /usr/local/tomcat/webapps/$war.war -d /usr/local/tomcat/webapps/$war ; rm -f /usr/local/tomcat/webapps/$war.war ; done )
+
+ENV SPECIFIC_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/specificConnector
+ENV SPECIFIC_PROXY_SERVICE_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/specificProxyService
+ENV SP_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/sp
+ENV IDP_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/idp
+
+FROM eidas-base-monolithic as eidas-mock-monolithic
 ARG TOMCAT_USER
 
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/IdP.war /usr/local/tomcat/webapps/
