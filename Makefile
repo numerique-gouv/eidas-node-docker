@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 #
 # default var
 #
@@ -5,7 +7,6 @@ DOCKER_BUILD_ARGS= # --no-cache
 DOCKER_BUILD_NAME=eidas
 DOCKER_DEFAULT_PLATFORM=linux/amd64
 EIDAS_NODE_VERSION=2.7
-SHELL=/bin/bash
 export
 #
 # eidas-node with wildfy
