@@ -90,7 +90,8 @@ RUN mkdir -p /work && \
 
 USER ${TOMCAT_USER}
 
-ENV EIDAS_CONFIG_REPOSITORY=/config/eidas
+ENV EIDAS_CONFIG_BASE=/config/eidas
+ENV EIDAS_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
