@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+DOCKER_BUILDKIT := 1
 
 #
 # default var
