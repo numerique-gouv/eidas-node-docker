@@ -4,10 +4,10 @@ DOCKER_BUILDKIT := 1
 #
 # default var
 #
-DOCKER_BUILD_ARGS= # --no-cache
 DOCKER_BUILD_NAME=eidas
 DOCKER_DEFAULT_PLATFORM=linux/amd64
-EIDAS_NODE_VERSION=2.7
+EIDAS_NODE_VERSION=2.7.0
+DOCKER_BUILD_ARGS=--build-arg EIDAS_NODE_VERSION=${EIDAS_NODE_VERSION}
 export
 #
 # eidas-node with wildfy
@@ -32,10 +32,10 @@ down-eidas-node-mock-wildfly:
 build-tomcat: build-eidas-node-tomcat build-eidas-node-mock-tomcat
 # eidas-node only
 build-eidas-node-tomcat:
-	if [ "${EIDAS_NODE_VERSION}" \< 2.7 ]; then docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-monolithic docker/tomcat; else docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-split docker/tomcat; fi
+	if [ "${EIDAS_NODE_VERSION}" \< 2.7.0 ]; then docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-monolithic docker/tomcat; else docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-node-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-node-split docker/tomcat; fi
 # full eidas-node with mock
 build-eidas-mock-tomcat:
-	if [ "${EIDAS_NODE_VERSION}" \< 2.7 ]; then docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-mock-monolithic docker/tomcat; else docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-mock-split docker/tomcat; fi
+	if [ "${EIDAS_NODE_VERSION}" \< 2.7.0 ]; then docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-mock-monolithic docker/tomcat; else docker build ${DOCKER_BUILD_ARGS} -t ${DOCKER_BUILD_NAME}-mock-${EIDAS_NODE_VERSION}:tomcat-latest --target eidas-mock-split docker/tomcat; fi
 
 run-tomcat-mock:
 	docker-compose -f docker-compose-tomcat-mock.yaml up ${DOCKER_BUILD_NAME}-mock
