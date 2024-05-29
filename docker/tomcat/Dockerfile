@@ -81,7 +81,7 @@ COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/TOMCAT/EidasNode
 
 # Copy server config
 COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/tomcat/* /config/eidas/
-COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/keystore/* /config/keystore/
+COPY --from=builder --chown=${TOMCAT_USER}:${TOMCAT_USER} /data/config/keystore/* /config/eidas/keystore/
 
 RUN mkdir -p /work && \
   unzip /usr/local/tomcat/webapps/EidasNode.war -d /usr/local/tomcat/webapps/EidasNode && \
