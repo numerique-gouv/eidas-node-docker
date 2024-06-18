@@ -1,5 +1,6 @@
-security.provider.1=SUN
-security.provider.2=org.bouncycastle.jce.provider.BouncyCastleProvider
+crypto.policy=unlimited
+security.provider.1=org.bouncycastle.jce.provider.BouncyCastleProvider
+security.provider.2=SUN
 security.provider.3=SunRsaSign
 security.provider.4=SunEC
 security.provider.5=SunJSSE
