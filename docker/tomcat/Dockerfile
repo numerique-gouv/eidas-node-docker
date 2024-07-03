@@ -38,8 +38,8 @@ RUN apt-get -qy update  ; apt-get install -qy unzip
 
 RUN groupadd -r ${TOMCAT_USER} -g 1000 && \
     useradd -u 1000 -r -g ${TOMCAT_USER} -M -d /usr/local/tomcat -s /sbin/nologin -c "${TOMCAT_USER} user" ${TOMCAT_USER} && \
-    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /usr/local/tomcat \
-    mkdir /log \
+    chown -R ${TOMCAT_USER}:${TOMCAT_USER} /usr/local/tomcat && \
+    mkdir /log && \
     chown ${TOMCAT_USER}:${TOMCAT_USER} /log
 
 # Copy bouncycastle lib
