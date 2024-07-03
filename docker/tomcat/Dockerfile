@@ -72,7 +72,8 @@ ENV EIDAS_CONNECTOR_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/connector
 ENV EIDAS_PROXY_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE/proxy
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
-ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider"
+ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider --add-opens org.bouncycastle.provider/org.bouncycastle.jcajce.provider.asymmetric.x509=ALL-UNNAMED"
+ENV LOG_HOME=/log
 
 FROM runner-base as eidas-base-monolithic
 ARG TOMCAT_USER
@@ -95,6 +96,7 @@ ENV EIDAS_CONFIG_REPOSITORY=$EIDAS_CONFIG_BASE
 ENV CATALINA_OPTS=""
 ENV JAVA_OPTS=""
 ENV JAVA_OPTS_CUSTOM="-Xmx512m -Djava.security.properties=/opt/java/openjdk/conf/security/java_bc.security --module-path /opt/java/openjdk/lib/bcprov-jdk18on-1.77.jar --add-modules org.bouncycastle.provider --add-opens org.bouncycastle.provider/org.bouncycastle.jcajce.provider.asymmetric.x509=ALL-UNNAMED"
+ENV LOG_HOME=/log
 
 FROM eidas-base-split as eidas-node-split
 
