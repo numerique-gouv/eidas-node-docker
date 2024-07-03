@@ -12,10 +12,14 @@ if [ "$EIDAS_TYPE" != "mock" -a "$EIDAS_TYPE" != "node" ]; then
   exit 1
 fi
 
-ls -d /etc/eidas/instances/$EIDAS_INSTANCE
+ls -d /etc/eidas/instances/"$EIDAS_INSTANCE"
+mkdir -p /var/log/eidas/instances/"$EIDAS_INSTANCE"
+
+docker volume create "logs_$EIDAS_INSTANCE"
 
 docker run \
  -p '[::1]':$EIDAS_PORT:8080 \
  -p $IGNITE_PORT:10900 \
- --mount type=bind,source=/etc/eidas/instances/$EIDAS_INSTANCE,target=/config/eidas,readonly \
+ --mount type=bind,source=/etc/eidas/instances/"$EIDAS_INSTANCE",target=/config/eidas,readonly \
+ --mount type=volume,source="logs_${EIDAS_INSTANCE}",target=/log
  eidas-${EIDAS_TYPE}-${EIDAS_VERSION}:tomcat-latest
