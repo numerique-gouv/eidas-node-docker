@@ -21,5 +21,5 @@ docker run \
  -p '[::1]':$EIDAS_PORT:8080 \
  -p $IGNITE_PORT:10900 \
  --mount type=bind,source=/etc/eidas/instances/"$EIDAS_INSTANCE",target=/config/eidas,readonly \
- --mount type=volume,source="$DOCKER_LOGS_VOLUME",target=/log
+ --mount type=volume,source="$DOCKER_LOGS_VOLUME",target=/log \
  eidas-${EIDAS_TYPE}-${EIDAS_VERSION}:tomcat-latest
