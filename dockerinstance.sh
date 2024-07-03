@@ -13,8 +13,6 @@ if [ "$EIDAS_TYPE" != "mock" -a "$EIDAS_TYPE" != "node" ]; then
 fi
 
 ls -d /etc/eidas/instances/"$EIDAS_INSTANCE"
-mkdir -p /var/log/eidas/instances/"$EIDAS_INSTANCE"
-
 docker volume create "logs_$EIDAS_INSTANCE"
 
 docker run \
